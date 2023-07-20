@@ -11,6 +11,7 @@
 #include "Timer.h"
 #include "Mutex.h"
 #include "Chrono.h"
+#include "OSException.h"
 
 /****************************************************************************/
 /****************************************************************************/
@@ -34,20 +35,28 @@ int main(int argc, char **argv)
 
     std::thread main_thread([]
     {
-        sys::timer ledTimer(std::chrono::milliseconds(200), []
+        try
         {
-            GPIO_ToggleBits(GPIOB, GPIO_Pin_0);
-            return true;
-        });
-        ledTimer.start();
-        sys::chrono::high_resolution_clock::time_point tp1 = sys::chrono::high_resolution_clock::now();
-        std::mutex my_mutex;
-        for(;;)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(900));
-            my_mutex.lock();
-            printf("Run: %d        \r\n", (sys::chrono::high_resolution_clock::now() - tp1).count());
-            my_mutex.unlock();
+            sys::timer ledTimer(std::chrono::milliseconds(200), []
+            {
+                GPIO_ToggleBits(GPIOB, GPIO_Pin_0);
+                return true;
+            });
+            ledTimer.start();
+            sys::chrono::high_resolution_clock::time_point tp1 = sys::chrono::high_resolution_clock::now();
+            std::mutex my_mutex;
+            for(;;)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(900));
+                my_mutex.lock();
+                printf("Run: %d        \r\n", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
+                my_mutex.unlock();                
+            }
+        }
+        catch(std::exception &e)
+        {            
+            printf("\r\nERR: %s", e.what());
+            while(1);
         }
     });
 

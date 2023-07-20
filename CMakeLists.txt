@@ -55,6 +55,7 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
         -D ARM_MATH_CM3=true
         -D USE_STDPERIPH_DRIVER=1
         -D STM32L1XX_HD
+        -D RTE_CMSIS_RTOS2_RTX5
         )
 
 # List of includ directories
