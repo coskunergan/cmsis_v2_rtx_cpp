@@ -1,0 +1,9 @@
+[submodule "Middlewares/cmsis"]
+	path = Middlewares/cmsis
+	url = https://github.com/ARM-software/CMSIS_5.git
+[submodule "Middlewares/cmsis-dsp"]
+	path = Middlewares/cmsis-dsp
+	url = https://github.com/ARM-software/CMSIS-DSP
+[submodule "Middlewares/cmsis-cpp"]
+	path = Middlewares/cmsis-cpp
+	url = https://github.com/Benichou34/cmsis_cpp.git
