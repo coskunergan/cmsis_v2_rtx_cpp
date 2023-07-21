@@ -72,7 +72,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
         Middlewares/cmsis/CMSIS/RTOS2/Include        
         Middlewares/cmsis/Device/ARM/ARMCM3/Include
         Middlewares/cmsis/CMSIS/Core/Include
-		Middlewares/cmsis-dsp/Include
+        Middlewares/cmsis-dsp/Include
         Middlewares/cmsis-cpp/include
         )
 
@@ -80,7 +80,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
 target_compile_options(${EXECUTABLE} PRIVATE
         -mcpu=cortex-m3
         -mthumb
-        -O3        
+        -O3
         -g3 -MD -MP -MQ 
         -Wpointer-arith 
         -ffunction-sections -fdata-sections         

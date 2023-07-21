@@ -14,6 +14,7 @@
 #include "mutex.h"
 #include "chrono.h"
 #include "osexception.h"
+#include "buzzer.h"
 
 using namespace cmsis;
 
@@ -22,27 +23,20 @@ using namespace cmsis;
 /****************************************************************************/
 void app_main(void)
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    buzzer buzzer;
 
-    printf("Restart..    \n");
+    printf("Restart..    \n");    
 
     //throw std::system_error(0, os_category(), "TEST!!");
-
-    std::thread main_thread([]
-    {
-        sys::timer ledTimer(std::chrono::milliseconds(200), []
-        {
-            GPIO_ToggleBits(GPIOB, GPIO_Pin_0);
+    
+    std::thread main_thread([&]
+    {        
+        sys::timer buzzerTimer(std::chrono::milliseconds(3000), [&]
+        {                        
+            buzzer.beep(std::chrono::milliseconds(50));
             return true;
         });
-        ledTimer.start();
+        buzzerTimer.start();
         sys::chrono::high_resolution_clock::time_point tp1 = sys::chrono::high_resolution_clock::now();
         std::mutex my_mutex;
         for(;;)
