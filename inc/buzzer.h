@@ -22,6 +22,7 @@ class buzzer
 public:
     buzzer()
     {
+        GPIO_InitTypeDef GPIO_InitStructure;
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
         GPIO_InitStructure.GPIO_Pin = Buzzer_Pin;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -34,6 +35,7 @@ public:
 
     ~buzzer()
     {
+        GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = Buzzer_Pin;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -49,14 +51,13 @@ public:
         {
             return beep_off();
         });
-        m_buzz_timer = std::move(buzz_timer);
+        m_tim_ptr = std::make_unique<sys::timer>(std::move(buzz_timer));
         beep_on();
-        m_buzz_timer.start();
+        m_tim_ptr->start();
     }
 
-private:
-    GPIO_InitTypeDef GPIO_InitStructure;
-    sys::timer m_buzz_timer;
+private:    
+    std::unique_ptr<sys::timer> m_tim_ptr;
     std::mutex m_buzz_mutex;
 
     void beep_on()
