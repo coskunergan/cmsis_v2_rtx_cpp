@@ -23,6 +23,7 @@ int main(int argc, char **argv)
 
     std::thread app_main_thread([]
     {
+#ifdef __cpp_exceptions
         try
         {
             app_main();
@@ -31,6 +32,9 @@ int main(int argc, char **argv)
         {
             printf("\n\nERR:%s", e.what());
         }
+#else
+        app_main();
+#endif
     });
 
     cmsis::kernel::start();

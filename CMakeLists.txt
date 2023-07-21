@@ -29,9 +29,7 @@ file(GLOB_RECURSE USER_SOURCES
         src/*.cpp
         src/*.c
         Libraries/STM32L1xx_StdPeriph_Driver/src/*.c
-        Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/*.c
-        Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c
-        Middlewares/cmsis/CMSIS/RTOS2/RTX/Config/RTX_Config.c
+        Middlewares/cmsis-cpp/src/rtx_os.cpp
         Middlewares/cmsis-cpp/src/OS.cpp
         Middlewares/cmsis-cpp/src/Thread.cpp
         Middlewares/cmsis-cpp/src/Threads.cpp
@@ -44,6 +42,8 @@ file(GLOB_RECURSE USER_SOURCES
         Middlewares/cmsis-cpp/src/EventFlag.cpp
         Middlewares/cmsis-cpp/src/ConditionVariable.cpp
         Middlewares/cmsis-cpp/src/Chrono.cpp
+        Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/*.c
+        Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c        
         #Middlewares/cmsis-cpp/src/MessageQueue.cpp
 )
         
@@ -65,11 +65,11 @@ target_include_directories(${EXECUTABLE} PRIVATE
         Libraries/Device/ST/STM32L1xx/Include
         Libraries/Device/ST/STM32L1xx/Source/Templates/gcc_ride7
         Libraries/STM32L1xx_StdPeriph_Driver/inc
-        Middlewares/cmsis/CMSIS/RTOS2/RTX/Include
-        Middlewares/cmsis/CMSIS/RTOS2/RTX/Include1
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Config
+        Middlewares/cmsis/CMSIS/RTOS2/RTX/Include1
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Source
         Middlewares/cmsis/CMSIS/RTOS2/Include        
+        Middlewares/cmsis/CMSIS/RTOS2/RTX/Include
         Middlewares/cmsis/Device/ARM/ARMCM3/Include
         Middlewares/cmsis/CMSIS/Core/Include
         Middlewares/cmsis-dsp/Include
@@ -85,6 +85,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         -Wpointer-arith 
         -ffunction-sections -fdata-sections         
         #-std=c++14
+        -fno-exceptions
         )                
 
 # Linker options

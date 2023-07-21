@@ -25,14 +25,14 @@ void app_main(void)
 {
     buzzer buzzer;
 
-    printf("Restart..    \n");    
+    printf("Restart..    \n");
 
     //throw std::system_error(0, os_category(), "TEST!!");
-    
+
     std::thread main_thread([&]
-    {        
+    {
         sys::timer buzzerTimer(std::chrono::milliseconds(3000), [&]
-        {                        
+        {
             buzzer.beep(std::chrono::milliseconds(50));
             return true;
         });
