@@ -19,6 +19,8 @@ int main(int argc, char **argv)
 {
     printf_init();
 
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+
     cmsis::kernel::initialize();
 
     std::thread app_main_thread([]

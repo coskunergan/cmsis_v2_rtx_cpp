@@ -15,25 +15,30 @@
 #include "chrono.h"
 #include "osexception.h"
 #include "buzzer.h"
+#include "encoder_pot.h"
 
 using namespace cmsis;
+
+
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 void app_main(void)
 {
-    buzzer buzzer;
-
     printf("Restart..    \n");
 
+    buzzer buzzer;  
+
+    encoder_pot encoder(std::chrono::milliseconds(100));
+    
     //throw std::system_error(0, os_category(), "TEST!!");
 
     std::thread main_thread([&]
     {
         sys::timer buzzerTimer(std::chrono::milliseconds(3000), [&]
         {
-            buzzer.beep(std::chrono::milliseconds(50));
+            buzzer.beep(std::chrono::milliseconds(1));
             return true;
         });
         buzzerTimer.start();
@@ -43,7 +48,8 @@ void app_main(void)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(900));
             my_mutex.lock();
-            printf("\nRun: %08X  \n", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
+            //printf("\nRun: %08X  \n", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
+            //printf("\nRun: %d  \n", encoder.get_count());
             my_mutex.unlock();
         }
     });

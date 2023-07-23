@@ -80,7 +80,7 @@ target_include_directories(${EXECUTABLE} PRIVATE
 target_compile_options(${EXECUTABLE} PRIVATE
         -mcpu=cortex-m3
         -mthumb
-        -O3
+        -O1
         -g3 -MD -MP -MQ 
         -Wpointer-arith 
         -ffunction-sections -fdata-sections         

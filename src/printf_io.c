@@ -62,7 +62,7 @@ static void io_pins_init(void)
     io_pin_init(LCD_ENB_PORT, LCD_ENB_PIN, LCD_ENB_AHB);
     io_pin_init(LCD_BL_PORT, LCD_BL_PIN, LCD_BL_AHB);
     GPIO_ResetBits(LCD_ENB_PORT, LCD_ENB_PIN);
-    GPIO_SetBits(LCD_BL_PORT, LCD_BL_PIN);
+    GPIO_ResetBits(LCD_BL_PORT, LCD_BL_PIN);
     GPIO_SetBits(LCD_RST_PORT, LCD_RST_PIN);
 }
 /****************************************************************************/
