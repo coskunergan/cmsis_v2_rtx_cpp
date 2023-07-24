@@ -8,6 +8,7 @@
 
 #include "RTE_Components.h"
 #include  CMSIS_device_header
+#include "printf_io.h"
 #include "os.h"
 #include "thread.h"
 #include "timer.h"
@@ -19,26 +20,35 @@
 
 using namespace cmsis;
 
+buzzer buzz;
+encoder_pot encoder;
 
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-void app_main(void)
+void pre_init()
 {
-    printf("Restart..    \n");
+    printf_init();
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+    buzz.init();
+    encoder.init(std::chrono::milliseconds(50));
+}
+/****************************************************************************/
+void app_main()
+{
+    printf("\rRestart..  ");
 
-    buzzer buzzer;  
-
-    encoder_pot encoder(std::chrono::milliseconds(100));
-    
-    //throw std::system_error(0, os_category(), "TEST!!");
-
-    std::thread main_thread([&]
+    encoder.hook([]
     {
-        sys::timer buzzerTimer(std::chrono::milliseconds(3000), [&]
+        printf("\rEnc: %d    ", encoder.get_count());
+        buzz.beep(std::chrono::milliseconds(50));
+    });
+
+    std::thread main_thread([]
+    {
+        sys::timer buzzerTimer(std::chrono::milliseconds(3000), []
         {
-            buzzer.beep(std::chrono::milliseconds(1));
+            buzz.beep(std::chrono::milliseconds(10));
             return true;
         });
         buzzerTimer.start();
@@ -46,10 +56,10 @@ void app_main(void)
         std::mutex my_mutex;
         for(;;)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(900));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             my_mutex.lock();
-            //printf("\nRun: %08X  \n", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
-            //printf("\nRun: %d  \n", encoder.get_count());
+            printf("\r\nRun: %08X", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
+    
             my_mutex.unlock();
         }
     });

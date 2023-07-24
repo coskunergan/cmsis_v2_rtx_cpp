@@ -17,10 +17,10 @@
 #define Buzzer_Pin 	    GPIO_Pin_11
 #define Buzzer_Clk      RCC_AHBPeriph_GPIOA
 
-class buzzer 
+class buzzer
 {
 public:
-    buzzer()
+    void init()
     {
         GPIO_InitTypeDef GPIO_InitStructure;
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
@@ -33,7 +33,7 @@ public:
         GPIO_SetBits(Buzzer_Port, Buzzer_Pin);// off
     }
 
-    ~buzzer()
+    void deinit()
     {
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = Buzzer_Pin;
@@ -42,23 +42,24 @@ public:
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
         GPIO_Init(Buzzer_Port, &GPIO_InitStructure);
-    }    
+    }
 
     void beep(std::chrono::milliseconds(msec))
     {
-        m_buzz_mutex.lock();
-        sys::timer buzz_timer(std::chrono::milliseconds(msec), [&]
+        if(!m_tim_ptr || (!m_tim_ptr->running()))
         {
-            return beep_off();
-        });
-        m_tim_ptr = std::make_unique<sys::timer>(std::move(buzz_timer));
-        beep_on();
-        m_tim_ptr->start();
+            sys::timer buzz_timer(std::chrono::milliseconds(msec), [&]
+            {
+                return beep_off();
+            });
+            m_tim_ptr = std::make_unique<sys::timer>(std::move(buzz_timer));
+            beep_on();
+            m_tim_ptr->start();
+        }
     }
 
-private:    
+private:
     std::unique_ptr<sys::timer> m_tim_ptr;
-    std::mutex m_buzz_mutex;
 
     void beep_on()
     {
@@ -68,7 +69,6 @@ private:
     bool beep_off()
     {
         GPIO_SetBits(Buzzer_Port, Buzzer_Pin);
-        m_buzz_mutex.unlock();
         return false;
     }
 };

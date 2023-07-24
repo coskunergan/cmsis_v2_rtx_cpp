@@ -6,20 +6,20 @@
     Author: Coskun ERGAN
 */
 
-#include "printf_io.h"
+#include "RTE_Components.h"
+#include  CMSIS_device_header
 #include "os.h"
 #include "thread.h"
 #include "osexception.h"
 
-extern void app_main(void);
+extern void pre_init();
+extern void app_main();
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 int main(int argc, char **argv)
 {
-    printf_init();
-
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+    pre_init();
 
     cmsis::kernel::initialize();
 

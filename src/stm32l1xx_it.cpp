@@ -34,7 +34,7 @@
 /** @addtogroup Template_Project
   * @{
   */
-//extern encoder_pot encoder;
+extern encoder_pot encoder;
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -46,10 +46,9 @@
 /*            Cortex-M3 Processor Exceptions Handlers                         */
 /******************************************************************************/
 
-void EXTI4_IRQHandler(void)
-{
-    // EXTI_ClearITPendingBit(EncoderPot_A_ExtiLine);
-    //encoder.isr_event();
+void EncoderA_IRQHandler(void)
+{    
+    encoder.isr_handler();
 }
 
 /**

@@ -2,7 +2,7 @@
 #include "printf_io.h"
 #include "stdbool.h"
 
-bool new_line;
+uint8_t ch_count;
 
 /* support printf function, usemicrolib is unnecessary */
 #if !defined (__GNUC__)
@@ -124,7 +124,8 @@ void printf_init(void)
     io_send(0xB0);
     io_send(0x00);
     io_send(0x11);
-    GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN); 
+    GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN);
+    ch_count = 0;
 }
 /****************************************************************************/
 #if defined (__GNUC__) && !defined (__clang__)
@@ -135,32 +136,44 @@ extern int __io_putchar(int ch);
 #endif
 PUTCHAR_PROTOTYPE
 {
-    if(ch == '\r')
+    if((ch == '\r') || (ch_count > 25))
     {
+        if(ch_count > 25)
+        {
+            io_send(0);
+            io_send(0);
+        }
         GPIO_ResetBits(LCD_CMD_PORT, LCD_CMD_PIN);
         io_send(0xB0);
         io_send(0x00);
         io_send(0x11);
         GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN);
-        new_line = true;
+        ch_count = 0;
     }
     else if(ch == '\n')
     {
-        if(new_line == false)
+        if(ch_count < 14)
         {
+            ch_count = 14;
             GPIO_ResetBits(LCD_CMD_PORT, LCD_CMD_PIN);
             io_send(0xB1);
             io_send(0x00);
             io_send(0x11);
             GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN);
         }
-        else
-        {
-            new_line = false;
-        }
     }
     else
     {
+        if(++ch_count == 14)
+        {
+            io_send(0);
+            io_send(0);
+            GPIO_ResetBits(LCD_CMD_PORT, LCD_CMD_PIN);
+            io_send(0xB1);
+            io_send(0x00);
+            io_send(0x11);
+            GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN);
+        }
         uint8_t temp = ch - 0x20;
         for(uint8_t i = 0; i < 6; i++)
         {
