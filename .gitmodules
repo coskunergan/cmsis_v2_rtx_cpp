@@ -6,4 +6,4 @@
 	url = https://github.com/ARM-software/CMSIS-DSP
 [submodule "Middlewares/cmsis-cpp"]
 	path = Middlewares/cmsis-cpp
-	url = https://github.com/Benichou34/cmsis_cpp.git
+	url = https://github.com/coskunergan/cmsis_cpp.git

@@ -86,7 +86,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         -flto
         -g3 -MD -MP -MQ 
         -Wpointer-arith         
-        -fno-exceptions     
+        #-fno-exceptions  #must be add #include "osexception.h"  -> rtx_os.cpp
         )
 
 # Linker options

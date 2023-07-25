@@ -138,17 +138,16 @@ PUTCHAR_PROTOTYPE
 {
     if((ch == '\r') || (ch_count > 25))
     {
-        if(ch_count > 25)
+        if(ch == '\r')
         {
-            io_send(0);
-            io_send(0);
+            ch_count = 0;
         }
         GPIO_ResetBits(LCD_CMD_PORT, LCD_CMD_PIN);
         io_send(0xB0);
         io_send(0x00);
         io_send(0x11);
         GPIO_SetBits(LCD_CMD_PORT, LCD_CMD_PIN);
-        ch_count = 0;
+
     }
     else if(ch == '\n')
     {

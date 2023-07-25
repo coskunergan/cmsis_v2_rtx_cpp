@@ -32,7 +32,7 @@ int main(int argc, char **argv)
         }
         catch(std::exception &e)
         {
-            printf("\n\nERR:%s", e.what());
+            printf("\rERR:%s", e.what());
         }
 #else
         app_main();

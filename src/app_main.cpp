@@ -36,33 +36,39 @@ void pre_init()
 /****************************************************************************/
 void app_main()
 {
-    printf("\rRestart..  ");
-
-    encoder.hook([]
+    try
     {
-        printf("\rEnc: %d    ", encoder.get_count());
-        buzz.beep(std::chrono::milliseconds(50));
-    });
+        printf("\rRestart..  ");
 
-    std::thread main_thread([]
-    {
-        sys::timer buzzerTimer(std::chrono::milliseconds(3000), []
+        encoder.hook([]
         {
-            buzz.beep(std::chrono::milliseconds(10));
-            return true;
+            printf("\rEnc: %d    ", encoder.get_count());
+            buzz.beep(std::chrono::milliseconds(50));
         });
-        buzzerTimer.start();
-        sys::chrono::high_resolution_clock::time_point tp1 = sys::chrono::high_resolution_clock::now();
-        std::mutex my_mutex;
-        for(;;)
+        std::thread main_thread([&]
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            my_mutex.lock();
-            printf("\r\nRun: %08X", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
-    
-            my_mutex.unlock();
-        }
-    });
+
+            sys::timer buzzerTimer(std::chrono::milliseconds(3000), []
+            {
+                buzz.beep(std::chrono::milliseconds(10));
+                return true;
+            });
+            buzzerTimer.start();
+            sys::chrono::high_resolution_clock::time_point tp1 = sys::chrono::high_resolution_clock::now();
+            std::mutex my_mutex;
+            for(;;)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                my_mutex.lock();
+                printf("\r\nRun: %08X", (uint32_t)(sys::chrono::high_resolution_clock::now() - tp1).count());
+                my_mutex.unlock();
+            }
+        });
+    }
+    catch(std::exception &e)
+    {
+        throw;
+    }
 }
 /****************************************************************************/
 /****************************************************************************/
