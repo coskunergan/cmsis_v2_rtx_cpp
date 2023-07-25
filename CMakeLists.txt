@@ -44,7 +44,7 @@ file(GLOB_RECURSE USER_SOURCES
         Middlewares/cmsis-cpp/src/Chrono.cpp
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/*.c
         Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c        
-        #Middlewares/cmsis-cpp/src/MessageQueue.cpp
+        Middlewares/cmsis-cpp/src/MessageQueue.cpp
 )
         
 # Build the executable based on the source files
@@ -76,17 +76,18 @@ target_include_directories(${EXECUTABLE} PRIVATE
         Middlewares/cmsis-cpp/include
         )
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wno-volatile")
+
 # Compiler options
 target_compile_options(${EXECUTABLE} PRIVATE
         -mcpu=cortex-m3
         -mthumb
-        -O1
+        -Os
+        -flto
         -g3 -MD -MP -MQ 
-        -Wpointer-arith 
-        -ffunction-sections -fdata-sections         
-        #-std=c++14
-        -fno-exceptions
-        )                
+        -Wpointer-arith         
+        -fno-exceptions     
+        )
 
 # Linker options
 target_link_options(${EXECUTABLE} PRIVATE
