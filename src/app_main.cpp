@@ -45,9 +45,11 @@ void app_main()
             printf("\rEnc: %d    ", encoder.get_count());
             buzz.beep(std::chrono::milliseconds(50));
         });
+
+        //throw std::system_error(0, os_category(), "TEST!!");
+
         std::thread main_thread([&]
         {
-
             sys::timer buzzerTimer(std::chrono::milliseconds(3000), []
             {
                 buzz.beep(std::chrono::milliseconds(10));

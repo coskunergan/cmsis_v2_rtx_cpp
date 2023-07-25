@@ -1,9 +1,0 @@
-device STM32L151RD
-r
-#erase
-loadfile Output\Project.hex
-r
-st
-hwinfo
-g
-q
