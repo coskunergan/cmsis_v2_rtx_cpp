@@ -25,7 +25,6 @@
 #define EncoderA_ExtiPort 		EXTI_PortSourceGPIOA
 #define EncoderA_ExtiLine 		EXTI_Line2
 #define EncoderA_IRQn           EXTI2_IRQn
-#define EncoderA_IRQHandler     EXTI2_IRQHandler
 
 #define EncoderB_Pin   			GPIO_Pin_4
 #define EncoderB_Port			GPIOB
@@ -84,6 +83,37 @@ public:
         }
     }
 
+    void isr_handler(void)
+    {
+        if(GPIO_ReadInputDataBit(EncoderB_Port, EncoderB_Pin))
+        {
+            m_count--;
+        }
+        else
+        {
+            m_count++;
+        }        
+        isr_disable();
+        event_flag->set(1);
+    }
+
+    int get_count()
+    {
+        return m_count.load();
+    }
+
+    void set_count(int val)
+    {
+        return m_count.store(val);
+    }    
+
+private:
+    std::atomic_int m_count;
+    std::unique_ptr<cmsis::event> event_flag;
+    std::function<void()> encoder_handler;
+    std::unique_ptr<sys::thread> m_thread_ptr;
+    std::chrono::milliseconds m_step_time;
+
     void isr_enable()
     {
         EXTI_InitTypeDef EXTI_InitStructure;
@@ -101,34 +131,7 @@ public:
         EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
         EXTI_InitStructure.EXTI_LineCmd = DISABLE;
         EXTI_Init(&EXTI_InitStructure);
-    }
-
-    void isr_handler(void)
-    {
-        if(GPIO_ReadInputDataBit(EncoderB_Port, EncoderB_Pin))
-        {
-            m_count--;
-        }
-        else
-        {
-            m_count++;
-        }
-        EXTI_ClearITPendingBit(EncoderA_ExtiLine);
-        isr_disable();
-        event_flag->set(1);
-    }
-
-    int get_count()
-    {
-        return m_count.load();
-    }
-
-private:
-    std::atomic_int m_count;
-    std::unique_ptr<cmsis::event> event_flag;
-    std::function<void()> encoder_handler;
-    std::unique_ptr<sys::thread> m_thread_ptr;
-    std::chrono::milliseconds m_step_time;
+    }    
 
 };
 
