@@ -66,8 +66,12 @@ void pre_init()
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
-    butt.init(std::chrono::seconds(3));
-    butt.check([]
+    butt.check(1, []
+    {
+        return !GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_2);
+    });
+
+    butt.check(0, []
     {
         return !GPIO_ReadInputDataBit(Button_Port, Button_Pin);
     });
@@ -85,15 +89,27 @@ void app_main()
 
         buzz.beep(std::chrono::milliseconds(50));
 
-        butt.press([]
+        butt.press(1, []
         {
-            printf("\rButton Pressed..");
+            printf("\rA-Button Pressed..");
             buzz.beep(std::chrono::milliseconds(50));
         });
 
-        butt.longpress([]
+        butt.longpress(1, std::chrono::seconds(5), []
         {
-            printf("\rButton LongPressed..");
+            printf("\rA-Button LongPressed..");
+            buzz.beep(std::chrono::milliseconds(200));
+        });        
+
+        butt.press(0, []
+        {
+            printf("\rB-Button Pressed..");
+            buzz.beep(std::chrono::milliseconds(50));
+        });
+
+        butt.longpress(0, std::chrono::seconds(5), []
+        {
+            printf("\rB-Button LongPressed..");
             buzz.beep(std::chrono::milliseconds(200));
         });
 

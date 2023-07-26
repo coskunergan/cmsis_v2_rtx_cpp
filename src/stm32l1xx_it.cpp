@@ -49,13 +49,14 @@ extern encoder_pot encoder;
 /******************************************************************************/
 void EXTI0_IRQHandler(void)
 {
-    butt.isr_handler();
+    butt.isr_handler(0);
     EXTI_ClearITPendingBit(EXTI_Line0);
 }
 
 void EXTI2_IRQHandler(void)
 {
-    encoder.isr_handler();
+    //encoder.isr_handler();
+    butt.isr_handler(1);
     EXTI_ClearITPendingBit(EXTI_Line2);
 }
 

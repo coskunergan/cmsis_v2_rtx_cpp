@@ -9,85 +9,116 @@
 #if !defined(__INCLUDE_BUTTON_H__)
 #define __INCLUDE_BUTTON_H__
 
+#include "RTE_Components.h"
+#include  CMSIS_device_header
 #include <chrono>
 #include "mutex.h"
 #include "timer.h"
-#include "eventflag.h"
+#include "threadflag.h"
 #include <functional>
+
+const int max_button_num = 3;
+const std::chrono::milliseconds m_button_check_msec = std::chrono::milliseconds(100);
 
 class button
 {
 public:
-    void init(std::chrono::milliseconds(long_press_msec))
+    void check(int id, std::function<bool()> &&handler)
     {
-        m_long_press_msec = long_press_msec;
-        m_button_check_msec = std::chrono::milliseconds(200);
-        count = 0;
+        m_button_check_handler[id] = std::move(handler);
     }
 
-    void check(std::function<bool()> &&handler)
+    void press(int id, std::function<void()> &&handler)
     {
-        m_button_check_handler = std::move(handler);
-    }
-
-    void press(std::function<void()> &&handler)
-    {
-        if(!m_button_press_handler)
+        if(!m_thread_ptr)
         {
             std::thread button_thread([&]
             {
-                cmsis::event evt_flag(1);
-                event_flag = std::make_unique<cmsis::event>(std::move(evt_flag));
+                cmsis::this_thread::flags th_flag;
+                uint8_t count[max_button_num];
+                int flag;
+                uint32_t mask;
+                uint32_t m_mask;
+                uint32_t temp_mask;
+                th_flag.clear(0x7FFFFFFF);
                 for(;;)
                 {
-                    event_flag->clear(1);
-                    event_flag->wait(1);
-                    if(m_button_press_handler)
+                    th_flag.wait_for(0x7FFFFFFF, std::chrono::milliseconds(m_button_check_msec), mask);
+                    flag = 0;
+                    th_flag.clear(0x7FFFFFFF);
+                    if(mask && mask != -2)
                     {
-                        m_button_press_handler();
+                        m_mask |= mask;
                     }
-                    do
+                    temp_mask = m_mask;
+                    while(temp_mask)
                     {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(m_button_check_msec));
-                        count++;
-                        if((count * std::chrono::milliseconds(m_button_check_msec)) > std::chrono::milliseconds(m_long_press_msec))
+                        do
                         {
-                            if(m_button_longpress_handler)
+                            if(temp_mask & 0x1)
                             {
-                                m_button_longpress_handler();
-                            }
-                            break;
+                                temp_mask >>= 1;
+                                break;
+                            }                            
+                            temp_mask >>= 1;
+                            flag++;
                         }
+                        while(1);
+
+                        if(count[flag] == 0)
+                        {
+                            count[flag]++;
+                            m_button_press_handler[flag]();
+                        }
+                        else
+                        {
+                            if(m_button_check_handler[flag]())
+                            {
+                                count[flag]++;
+                                if((count[flag] * std::chrono::milliseconds(m_button_check_msec)) > std::chrono::milliseconds(m_long_press_msec[flag]))
+                                {
+                                    if(m_button_longpress_handler[flag])
+                                    {
+                                        m_button_longpress_handler[flag]();
+                                    }
+                                    count[flag]=0;
+                                    m_mask &= ~(1UL << flag);                                
+                                }
+                            }
+                            else
+                            {
+                                count[flag]=0;
+                                m_mask &= ~(1UL << flag);
+                            }
+                        }
+                        flag++;
                     }
-                    while(m_button_check_handler());
-                    count = 0;
                 }
             });
             m_thread_ptr = std::make_unique<sys::thread>(std::move(button_thread));
         }
-        m_button_press_handler = std::move(handler);
+        m_button_press_handler[id] = std::move(handler);
     }
 
-    void longpress(std::function<void()> &&handler)
+    void longpress(int id, std::chrono::milliseconds(long_press_msec), std::function<void()> &&handler)
     {
-        m_button_longpress_handler = std::move(handler);
+        m_long_press_msec[id] = long_press_msec;
+        m_button_longpress_handler[id] = std::move(handler);
     }
 
-    void isr_handler()
+    void isr_handler(int id)
     {
-        event_flag->set(1);
+        m_th_flag.set(*m_thread_ptr, (1 << id));
     }
 
 private:
-    int count;
     std::unique_ptr<sys::timer> m_tim_ptr;
-    std::chrono::milliseconds m_long_press_msec;
-    std::chrono::milliseconds m_button_check_msec;
-    std::function<bool()> m_button_check_handler;
-    std::function<void()> m_button_press_handler;
-    std::function<void()> m_button_longpress_handler;
+    std::chrono::milliseconds m_long_press_msec[max_button_num];
+    std::function<bool()> m_button_check_handler[max_button_num];
+    std::function<void()> m_button_press_handler[max_button_num];
+    std::function<void()> m_button_longpress_handler[max_button_num];
     std::unique_ptr<sys::thread> m_thread_ptr;
-    std::unique_ptr<cmsis::event> event_flag;
+    cmsis::thread_flags m_th_flag;
 
 };
 
