@@ -9,10 +9,11 @@
 #ifndef __EEPROM_DRIVER_H
 #define __EEPROM_DRIVER_H
 
-#include "stm32l1xx.h"
+#include "RTE_Components.h"
+#include  CMSIS_device_header
 
-#define DATA_EEPROM_START_ADDR      0x08080000
-#define DATA_EEPROM_END_ADDR        0x080803FF
+const uint32_t DATA_EEPROM_START_ADDR = 0x08080000;
+const uint32_t DATA_EEPROM_END_ADDR   = 0x080803FF;
 
 class eeprom_driver
 {

@@ -9,13 +9,15 @@
 #if !defined(__INCLUDE_BUZZER_H__)
 #define __INCLUDE_BUZZER_H__
 
+#include "RTE_Components.h"
+#include  CMSIS_device_header
 #include <chrono>
 #include "mutex.h"
 #include "timer.h"
 
-#define Buzzer_Port 	GPIOA
-#define Buzzer_Pin 	    GPIO_Pin_11
-#define Buzzer_Clk      RCC_AHBPeriph_GPIOA
+GPIO_TypeDef *const Buzzer_Port = GPIOA;
+const uint16_t Buzzer_Pin       = GPIO_Pin_11;
+const uint32_t Buzzer_Clk       = RCC_AHBPeriph_GPIOA;
 
 class buzzer
 {

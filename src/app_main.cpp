@@ -90,7 +90,7 @@ void app_main()
             printf("\rButton Pressed..");
             buzz.beep(std::chrono::milliseconds(50));
         });
-        
+
         butt.longpress([]
         {
             printf("\rButton LongPressed..");

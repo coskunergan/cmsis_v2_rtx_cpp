@@ -9,26 +9,28 @@
 #if !defined(__INCLUDE_ENCODER_POT_H__)
 #define __INCLUDE_ENCODER_POT_H__
 
+#include "RTE_Components.h"
+#include  CMSIS_device_header
 #include <chrono>
 #include "mutex.h"
 #include "timer.h"
 #include "thread.h"
-#include "eventflag.h"
+#include "threadflag.h"
 #include <functional>
 #include <atomic>
 
-#define EncoderA_Pin   			GPIO_Pin_2
-#define EncoderA_Port			GPIOA
-#define EncoderA_Clk		    RCC_AHBPeriph_GPIOA
-#define EncoderA_Source  		GPIO_PinSource2
-#define EncoderA_ExtiPin  		EXTI_PinSource2
-#define EncoderA_ExtiPort 		EXTI_PortSourceGPIOA
-#define EncoderA_ExtiLine 		EXTI_Line2
-#define EncoderA_IRQn           EXTI2_IRQn
+const uint16_t EncoderA_Pin       = GPIO_Pin_2;
+GPIO_TypeDef *const EncoderA_Port = GPIOA;
+const uint32_t EncoderA_Clk       = RCC_AHBPeriph_GPIOA;
+const uint8_t EncoderA_Source     = GPIO_PinSource2;
+const uint8_t EncoderA_ExtiPin    = EXTI_PinSource2;
+const uint8_t EncoderA_ExtiPort   = EXTI_PortSourceGPIOA;
+const uint32_t EncoderA_ExtiLine  = EXTI_Line2;
+const IRQn_Type EncoderA_IRQn     = EXTI2_IRQn;
 
-#define EncoderB_Pin   			GPIO_Pin_4
-#define EncoderB_Port			GPIOB
-#define EncoderB_Clk		    RCC_AHBPeriph_GPIOB
+const uint16_t EncoderB_Pin       = GPIO_Pin_4;
+GPIO_TypeDef *const EncoderB_Port = GPIOB;
+const uint32_t EncoderB_Clk       = RCC_AHBPeriph_GPIOB;
 
 class encoder_pot
 {
@@ -65,12 +67,11 @@ public:
             encoder_handler = std::move(handler);
             std::thread encoder_thread([&]
             {
-                cmsis::event evt_flag(1);
-                event_flag = std::make_unique<cmsis::event>(std::move(evt_flag));
+                cmsis::this_thread::flags th_flag;
                 for(;;)
                 {
-                    event_flag->clear(1);
-                    event_flag->wait(1);
+                    th_flag.wait(1);
+                    th_flag.clear(1);
                     if(encoder_handler)
                     {
                         encoder_handler();
@@ -78,7 +79,7 @@ public:
                     std::this_thread::sleep_for(std::chrono::milliseconds(m_step_time));
                     isr_enable();
                 }
-            });            
+            });
             m_thread_ptr = std::make_unique<sys::thread>(std::move(encoder_thread));
         }
     }
@@ -92,9 +93,9 @@ public:
         else
         {
             m_count++;
-        }        
+        }
         isr_disable();
-        event_flag->set(1);
+        m_th_flag.set(*m_thread_ptr, 1);
     }
 
     int get_count()
@@ -105,14 +106,14 @@ public:
     void set_count(int val)
     {
         return m_count.store(val);
-    }    
+    }
 
 private:
     std::atomic_int m_count;
-    std::unique_ptr<cmsis::event> event_flag;
     std::function<void()> encoder_handler;
     std::unique_ptr<sys::thread> m_thread_ptr;
     std::chrono::milliseconds m_step_time;
+    cmsis::thread_flags m_th_flag;
 
     void isr_enable()
     {
@@ -131,7 +132,7 @@ private:
         EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
         EXTI_InitStructure.EXTI_LineCmd = DISABLE;
         EXTI_Init(&EXTI_InitStructure);
-    }    
+    }
 
 };
 
