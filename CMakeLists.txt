@@ -95,7 +95,7 @@ target_link_options(${EXECUTABLE} PRIVATE
         -mthumb
         #-mfpu=none
         #-mfloat-abi=none
-        -specs=nosys.specs
+        -specs=nano.specs
         -Wl,--gc-sections
         -Xlinker -print-memory-usage
         )
