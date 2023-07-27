@@ -29,14 +29,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_it.h"
-#include "encoder_pot.h"
 #include "button.h"
 
 /** @addtogroup Template_Project
   * @{
   */
 extern button butt;
-extern encoder_pot encoder;
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -55,7 +53,6 @@ void EXTI0_IRQHandler(void)
 
 void EXTI2_IRQHandler(void)
 {
-    //encoder.isr_handler();
     butt.isr_handler(1);
     EXTI_ClearITPendingBit(EXTI_Line2);
 }

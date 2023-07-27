@@ -17,22 +17,41 @@
 #include "osexception.h"
 #include "button.h"
 #include "buzzer.h"
-#include "encoder_pot.h"
+#include <atomic>
 
 using namespace cmsis;
 
 button butt;
 buzzer buzz;
-encoder_pot encoder;
+std::atomic_int enc_count;
 
-#define Button_Pin   		GPIO_Pin_0
-#define Button_Port			GPIOA
-#define Button_Clk		    RCC_AHBPeriph_GPIOA
-#define Button_Source  		GPIO_PinSource0
-#define Button_ExtiPin  	EXTI_PinSource0
-#define Button_ExtiPort 	EXTI_PortSourceGPIOA
-#define Button_ExtiLine     EXTI_Line0
-#define Button_IRQn         EXTI0_IRQn
+enum : size_t
+{
+    button_id = 0,
+    encoder_button_id = 1
+};
+
+const uint16_t Button_Pin         = GPIO_Pin_0;
+GPIO_TypeDef *const Button_Port   = GPIOA;
+const uint32_t Button_Clk         = RCC_AHBPeriph_GPIOA;
+const uint8_t Button_Source       = GPIO_PinSource0;
+const uint8_t Button_ExtiPin      = EXTI_PinSource0;
+const uint8_t Button_ExtiPort     = EXTI_PortSourceGPIOA;
+const uint32_t Button_ExtiLine    = EXTI_Line0;
+const IRQn_Type Button_IRQn       = EXTI0_IRQn;
+
+const uint16_t EncoderA_Pin       = GPIO_Pin_2;
+GPIO_TypeDef *const EncoderA_Port = GPIOA;
+const uint32_t EncoderA_Clk       = RCC_AHBPeriph_GPIOA;
+const uint8_t EncoderA_Source     = GPIO_PinSource2;
+const uint8_t EncoderA_ExtiPin    = EXTI_PinSource2;
+const uint8_t EncoderA_ExtiPort   = EXTI_PortSourceGPIOA;
+const uint32_t EncoderA_ExtiLine  = EXTI_Line2;
+const IRQn_Type EncoderA_IRQn     = EXTI2_IRQn;
+
+const uint16_t EncoderB_Pin       = GPIO_Pin_4;
+GPIO_TypeDef *const EncoderB_Port = GPIOB;
+const uint32_t EncoderB_Clk       = RCC_AHBPeriph_GPIOB;
 
 /****************************************************************************/
 /****************************************************************************/
@@ -45,14 +64,27 @@ void pre_init()
     GPIO_InitTypeDef GPIO_InitStructure;
     NVIC_InitTypeDef NVIC_InitStructure;
     EXTI_InitTypeDef EXTI_InitStructure;
+
+    SYSCFG_EXTILineConfig(EncoderA_ExtiPort, EncoderA_ExtiPin);
     SYSCFG_EXTILineConfig(Button_ExtiPort, Button_ExtiPin);
+
+    RCC_AHBPeriphClockCmd(EncoderA_Clk, ENABLE);
+    RCC_AHBPeriphClockCmd(EncoderB_Clk, ENABLE);
     RCC_AHBPeriphClockCmd(Button_Clk, ENABLE);
+
     GPIO_InitStructure.GPIO_Pin = Button_Pin;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
     GPIO_Init(Button_Port, &GPIO_InitStructure);
-    EXTI_ClearITPendingBit(Button_ExtiLine);
+
+    GPIO_InitStructure.GPIO_Pin = EncoderA_Pin;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
+    GPIO_Init(EncoderA_Port, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = EncoderB_Pin;
+    GPIO_Init(EncoderB_Port, &GPIO_InitStructure);
 
     EXTI_InitStructure.EXTI_Line = Button_ExtiLine;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
@@ -60,25 +92,36 @@ void pre_init()
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 
+    EXTI_InitStructure.EXTI_Line = EncoderA_ExtiLine;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
+
+    NVIC_InitStructure.NVIC_IRQChannel = EncoderA_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 15;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
     NVIC_InitStructure.NVIC_IRQChannel = Button_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 15;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
-    butt.check(1, []
-    {
-        return !GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_2);
-    });
-
-    butt.check(0, []
+    butt.check(button_id, []
     {
         return !GPIO_ReadInputDataBit(Button_Port, Button_Pin);
+    });
+
+    butt.check(encoder_button_id, []
+    {
+        return !GPIO_ReadInputDataBit(EncoderA_Port, EncoderA_Pin);
     });
     //------------------------------
     buzz.init();
     //------------------------------
-    encoder.init(std::chrono::milliseconds(50));
 }
 /****************************************************************************/
 void app_main()
@@ -89,34 +132,31 @@ void app_main()
 
         buzz.beep(std::chrono::milliseconds(50));
 
-        butt.press(1, []
+        butt.press(button_id, []
         {
-            printf("\rA-Button Pressed..");
+            printf("\rButton Pressed..");
             buzz.beep(std::chrono::milliseconds(50));
         });
 
-        butt.longpress(1, std::chrono::seconds(5), []
+        butt.longpress(button_id, std::chrono::seconds(2), []
         {
-            printf("\rA-Button LongPressed..");
-            buzz.beep(std::chrono::milliseconds(200));
-        });        
-
-        butt.press(0, []
-        {
-            printf("\rB-Button Pressed..");
-            buzz.beep(std::chrono::milliseconds(50));
-        });
-
-        butt.longpress(0, std::chrono::seconds(5), []
-        {
-            printf("\rB-Button LongPressed..");
+            printf("\rButton LongPressed..");
             buzz.beep(std::chrono::milliseconds(200));
         });
 
-        encoder.hook([]
+        butt.press(encoder_button_id, []
         {
-            printf("\rEnc: %d    ", encoder.get_count());
+            if(GPIO_ReadInputDataBit(EncoderB_Port, EncoderB_Pin))
+            {
+                enc_count--;
+            }
+            else
+            {
+                enc_count++;
+            }
+            printf("\rEnc: %d    ", enc_count.load());
             buzz.beep(std::chrono::milliseconds(50));
+
         });
 
         //throw std::system_error(0, os_category(), "TEST!!");

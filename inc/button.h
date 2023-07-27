@@ -17,18 +17,18 @@
 #include "threadflag.h"
 #include <functional>
 
-const int max_button_num = 3;
+const size_t max_button_num = 3;
 const std::chrono::milliseconds m_button_check_msec = std::chrono::milliseconds(100);
 
 class button
 {
 public:
-    void check(int id, std::function<bool()> &&handler)
+    void check(size_t id, std::function<bool()> &&handler)
     {
         m_button_check_handler[id] = std::move(handler);
     }
 
-    void press(int id, std::function<void()> &&handler)
+    void press(size_t id, std::function<void()> &&handler)
     {
         if(!m_thread_ptr)
         {
@@ -36,62 +36,54 @@ public:
             {
                 cmsis::this_thread::flags th_flag;
                 uint8_t count[max_button_num];
-                int flag;
+                size_t id;
                 uint32_t mask;
                 uint32_t m_mask;
                 uint32_t temp_mask;
-                th_flag.clear(0x7FFFFFFF);
                 for(;;)
                 {
-                    th_flag.wait_for(0x7FFFFFFF, std::chrono::milliseconds(m_button_check_msec), mask);
-                    flag = 0;
-                    th_flag.clear(0x7FFFFFFF);
-                    if(mask && mask != -2)
+                    auto status = th_flag.wait_for(0x7FFFFFFF, std::chrono::milliseconds(m_button_check_msec), mask);
+                    if(status == decltype(status)::no_timeout)
                     {
                         m_mask |= mask;
                     }
                     temp_mask = m_mask;
+                    id = 0;
                     while(temp_mask)
                     {
-                        do
+                        while((temp_mask & 1) == 0)// find set bit
                         {
-                            if(temp_mask & 0x1)
-                            {
-                                temp_mask >>= 1;
-                                break;
-                            }                            
+                            id++;
                             temp_mask >>= 1;
-                            flag++;
                         }
-                        while(1);
-
-                        if(count[flag] == 0)
+                        if(count[id] == 0)
                         {
-                            count[flag]++;
-                            m_button_press_handler[flag]();
+                            count[id]++;
+                            m_button_press_handler[id]();
                         }
                         else
                         {
-                            if(m_button_check_handler[flag]())
+                            if(m_button_check_handler[id]())
                             {
-                                count[flag]++;
-                                if((count[flag] * std::chrono::milliseconds(m_button_check_msec)) > std::chrono::milliseconds(m_long_press_msec[flag]))
+                                count[id]++;
+                                if((count[id] * std::chrono::milliseconds(m_button_check_msec)) > std::chrono::milliseconds(m_long_press_msec[id]))
                                 {
-                                    if(m_button_longpress_handler[flag])
+                                    if(m_button_longpress_handler[id])
                                     {
-                                        m_button_longpress_handler[flag]();
+                                        m_button_longpress_handler[id]();
                                     }
-                                    count[flag]=0;
-                                    m_mask &= ~(1UL << flag);                                
+                                    count[id] = 0;
+                                    m_mask &= ~(1UL << id);
                                 }
                             }
                             else
                             {
-                                count[flag]=0;
-                                m_mask &= ~(1UL << flag);
+                                count[id] = 0;
+                                m_mask &= ~(1UL << id);
                             }
                         }
-                        flag++;
+                        id++;
+                        temp_mask >>= 1;
                     }
                 }
             });
@@ -100,13 +92,13 @@ public:
         m_button_press_handler[id] = std::move(handler);
     }
 
-    void longpress(int id, std::chrono::milliseconds(long_press_msec), std::function<void()> &&handler)
+    void longpress(size_t id, std::chrono::milliseconds(long_press_msec), std::function<void()> &&handler)
     {
         m_long_press_msec[id] = long_press_msec;
         m_button_longpress_handler[id] = std::move(handler);
     }
 
-    void isr_handler(int id)
+    void isr_handler(size_t id)
     {
         m_th_flag.set(*m_thread_ptr, (1 << id));
     }

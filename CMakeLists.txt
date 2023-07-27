@@ -82,7 +82,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wno-volatile")
 target_compile_options(${EXECUTABLE} PRIVATE
         -mcpu=cortex-m3
         -mthumb
-        -O1
+        -Os
         -flto
         -g3 -MD -MP -MQ 
         -Wpointer-arith         
