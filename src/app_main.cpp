@@ -156,7 +156,6 @@ void app_main()
             }
             printf("\rEnc: %d    ", enc_count.load());
             buzz.beep(std::chrono::milliseconds(50));
-
         });
 
         //throw std::system_error(0, os_category(), "TEST!!");
