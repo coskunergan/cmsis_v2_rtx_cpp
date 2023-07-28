@@ -94,7 +94,7 @@ add_custom_command(TARGET ${EXECUTABLE}
         COMMAND ${CMAKE_OBJCOPY} -O srec --srec-len=64 ${EXECUTABLE} ${PROJECT_NAME}.s19
         COMMAND ${CMAKE_OBJCOPY} -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
         COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin
-        COMMAND ${PROJECT_SOURCE_DIR}/Output/srec_cat.exe ${PROJECT_NAME}.s19 -crop 0x08000000 ${COMPILER_CLASSB_FLASH_END_ADDRES} 
+        COMMAND ${CMAKE_SOURCE_DIR}/Output/srec_cat.exe ${PROJECT_NAME}.s19 -crop 0x08000000 ${COMPILER_CLASSB_FLASH_END_ADDRES} 
         -fill 0xFF 0x08000000 ${COMPILER_CLASSB_FLASH_END_ADDRES} -crc16-l-e ${COMPILER_CLASSB_FLASH_END_ADDRES}  
-        -o ${PROJECT_SOURCE_DIR}/Output/Project.hex -intel -address-length=4)
+        -o ${CMAKE_SOURCE_DIR}/Output/Project.hex -intel -address-length=4)
 
