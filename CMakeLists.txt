@@ -31,7 +31,9 @@ file(GLOB_RECURSE USER_SOURCES
         Libraries/STM32L1xx_StdPeriph_Driver/src/*.c
         Middlewares/cmsis-cpp/src/*.cpp
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/*.c
-        Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c        
+        Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c
+        Middlewares/cmsis-dsp/Source/ControllerFunctions/ControllerFunctions.c
+        Middlewares/cmsis-dsp/Source/CommonTables/CommonTables.c
 )
         
 # Build the executable based on the source files
