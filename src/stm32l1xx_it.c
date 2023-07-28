@@ -29,12 +29,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_it.h"
-#include "button.h"
 
 /** @addtogroup Template_Project
   * @{
   */
-extern button butt;
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -45,17 +44,6 @@ extern button butt;
 /******************************************************************************/
 /*            Cortex-M3 Processor Exceptions Handlers                         */
 /******************************************************************************/
-void EXTI0_IRQHandler(void)
-{
-    butt.isr_handler(0);
-    EXTI_ClearITPendingBit(EXTI_Line0);
-}
-
-void EXTI2_IRQHandler(void)
-{
-    butt.isr_handler(1);
-    EXTI_ClearITPendingBit(EXTI_Line2);
-}
 
 /**
   * @brief  This function handles NMI exception.
