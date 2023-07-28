@@ -35,7 +35,7 @@ file(GLOB_RECURSE USER_SOURCES
 )
         
 # Build the executable based on the source files
-add_executable(${EXECUTABLE} ${USER_SOURCES} ${USER_SOURCES_EX})
+add_executable(${EXECUTABLE} ${USER_SOURCES_EX} ${USER_SOURCES})
 
 # List of compiler defines, prefix with -D compiler option
 target_compile_definitions(${EXECUTABLE} PRIVATE
