@@ -23,21 +23,24 @@ set(COMPILER_CLASSB_FLASH_END_ADDRES 0x08020000) #128k
 # Optional: issue a message to be sure it uses the correct toolchain file.
 message(STATUS "CMAKE_TOOLCHAIN_FILE is: ${CMAKE_TOOLCHAIN_FILE}")
 
-file(GLOB_RECURSE USER_SOURCES  
+file(GLOB_RECURSE USER_SOURCE  
         Libraries/Device/ST/STM32L1xx/Source/Templates/gcc_ride7/startup_stm32l1xx_hd.s
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/GCC/irq_armv7m.S
         src/*.cpp
         src/*.c
         Libraries/STM32L1xx_StdPeriph_Driver/src/*.c
+        Libraries/stm32_hal/src/*.cpp
         Middlewares/cmsis-cpp/src/*.cpp
         Middlewares/cmsis/CMSIS/RTOS2/RTX/Source/*.c
         Middlewares/cmsis/CMSIS/RTOS2/Source/os_systick.c
         Middlewares/cmsis-dsp/Source/ControllerFunctions/ControllerFunctions.c
         Middlewares/cmsis-dsp/Source/CommonTables/CommonTables.c
 )
+
+list (APPEND USER_SOURCES ${USER_SOURCE})
         
 # Build the executable based on the source files
-add_executable(${EXECUTABLE} ${USER_SOURCES_EX} ${USER_SOURCES})
+add_executable(${EXECUTABLE} ${USER_SOURCES})
 
 # List of compiler defines, prefix with -D compiler option
 target_compile_definitions(${EXECUTABLE} PRIVATE
@@ -50,6 +53,7 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
 # List of includ directories
 target_include_directories(${EXECUTABLE} PRIVATE
         inc
+        Libraries/stm32_hal/inc
         Libraries/STM32L1xx_StdPeriph_Driver/inc
         Libraries/Device/ST/STM32L1xx/Include
         Libraries/Device/ST/STM32L1xx/Source/Templates/gcc_ride7
