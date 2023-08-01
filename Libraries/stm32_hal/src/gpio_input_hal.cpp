@@ -10,110 +10,119 @@
 
 namespace gpio_hal
 {
-    bool GpioInput::_interrupt_service_installed{false};
+    std::forward_list<std::pair<uint16_t, std::function<void()>>> GpioInput::forwardListOfPairs;
 
-    void GpioInput::gpio_isr_callback(void *args)
+    // void GpioInput::EXTI0_IRQHandler(void)
+    // {
+    //     struct interrupt_args
+    //     {
+    //         bool _event_handler_set = false;
+    //         bool _custom_event_handler_set = false;
+    //         uint16_t _gpio;
+    //     } _interrupt_args;
+    //      _interrupt_args._gpio=GPIO_Pin_0;
+    //     gpio_isr_callback(&_interrupt_args);
+    //     EXTI_ClearITPendingBit(EXTI_Line0);
+    // }
+
+    void GpioInput::gpio_isr_callback(const uint16_t gpio)
     {
-        int32_t pin = (reinterpret_cast<struct interrupt_args *>(args))->_gpio;
-        bool event_handler_set = (reinterpret_cast<struct interrupt_args *>(args))->_event_handler_set;
-
-        // if (queue_enabled)
-        // {
-        //     xQueueSendFromISR(queue_handle, &pin, NULL);
-        // }
-        // else if (custom_event_handler_set)
-        // {
-        //     esp_event_isr_post_to(custom_event_loop_handle, INPUT_EVENTS, pin, nullptr, 0, nullptr);
-        // }
-        // else if (event_handler_set)
-        // {
-        //     esp_event_isr_post(INPUT_EVENTS, pin, nullptr, 0, nullptr);
-        // }
+        // mutex
+        for(auto currentPair : forwardListOfPairs)
+        {
+            if(currentPair.first == gpio)
+            {
+                currentPair.second();
+            }
+        }
+        // mutex
     }
 
-    void GpioInput::_init(const gpio_num_t pin, const bool activeLow)
+    void GpioInput::_init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        uint16_t gpio = pin;
-        GPIO_TypeDef *port;
-
-        switch(pin >> 16)
+        if(port == GPIOA)
         {
-            case 0:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
-                port = GPIOA;
-                break;
-            case 1:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
-                port = GPIOB;
-                break;
-            case 2:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
-                port = GPIOC;
-                break;
-            case 3:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
-                port = GPIOD;
-                break;
-            case 4:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
-                port = GPIOE;
-                break;
-            case 5:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
-                port = GPIOF;
-                break;
-            case 6:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOG, ENABLE);
-                port = GPIOG;
-                break;
-            case 7:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOH, ENABLE);
-                port = GPIOH;
-                break;
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+            _port_source = EXTI_PortSourceGPIOA;
+        }
+        else if(port == GPIOB)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
+            _port_source = EXTI_PortSourceGPIOB;
+        }
+        else if(port == GPIOC)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
+            _port_source = EXTI_PortSourceGPIOC;
+        }
+        else if(port == GPIOD)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
+            _port_source = EXTI_PortSourceGPIOD;
+        }
+        else if(port == GPIOE)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
+            _port_source = EXTI_PortSourceGPIOE;
+        }
+        else if(port == GPIOF)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
+            _port_source = EXTI_PortSourceGPIOF;
+        }
+        else if(port == GPIOG)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOG, ENABLE);
+            _port_source = EXTI_PortSourceGPIOG;
+        }
+        else if(port == GPIOH)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOH, ENABLE);
+            _port_source = EXTI_PortSourceGPIOH;
         }
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init(port, &GPIO_InitStructure);
+        GPIO_Init((GPIO_TypeDef * const)port, &GPIO_InitStructure);
         _active_low = activeLow;
-        _interrupt_args._gpio = gpio;
+        _gpio = gpio;
         _port = port;
     }
 
-    GpioInput::GpioInput(const gpio_num_t pin, const bool activeLow)
+    GpioInput::GpioInput(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        _init(pin, activeLow);
+        _init(port, gpio, activeLow);
     }
 
-    GpioInput::GpioInput(const gpio_num_t pin)
+    GpioInput::GpioInput(GPIO_TypeDef *const port, const uint16_t gpio)
     {
-        _init(pin, false);
+        _init(port, gpio, false);
     }
 
     GpioInput::GpioInput(void)
     {
     }
 
-    void GpioInput::init(const gpio_num_t pin, const bool activeLow)
+    void GpioInput::init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        _init(pin, activeLow);
+        _init(port, gpio, activeLow);
     }
 
-    void GpioInput::init(const gpio_num_t pin)
+    void GpioInput::init(GPIO_TypeDef *const port, const uint16_t gpio)
     {
-        _init(pin, false);
+        _init(port, gpio, false);
     }
 
     int GpioInput::read(void)
     {
-        return _active_low ? !GPIO_ReadInputDataBit(_port, _interrupt_args._gpio) : GPIO_ReadInputDataBit(_port, _interrupt_args._gpio);
+        return _active_low ? !GPIO_ReadInputDataBit(_port, _gpio) : GPIO_ReadInputDataBit(_port, _gpio);
     }
 
     void GpioInput::enablePullup(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -122,7 +131,7 @@ namespace gpio_hal
     void GpioInput::disablePullup(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -131,7 +140,7 @@ namespace gpio_hal
     void GpioInput::enablePulldown(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -140,7 +149,7 @@ namespace gpio_hal
     void GpioInput::disablePulldown(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -149,7 +158,7 @@ namespace gpio_hal
     void GpioInput::enablePullupPulldown(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -158,7 +167,7 @@ namespace gpio_hal
     void GpioInput::disablePullupPulldown(void)
     {
         GPIO_InitTypeDef GPIO_InitStructure;
-        GPIO_InitStructure.GPIO_Pin = _interrupt_args._gpio;
+        GPIO_InitStructure.GPIO_Pin = _gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(_port, &GPIO_InitStructure);
@@ -166,89 +175,127 @@ namespace gpio_hal
 
     void GpioInput::enableInterrupt(gpio_int_type_t int_type)
     {
-        // esp_err_t status{ESP_OK};
+        IRQn_Type exti_irqn;
+        uint32_t exti_line = _gpio;
+        uint8_t exti_source;
+        uint8_t pin_source;
 
-        // // Invert triggers if active low is enabled
-        // if (_active_low)
-        // {
-        //     switch (int_type)
-        //     {
-        //     case GPIO_INTR_POSEDGE:
-        //         int_type = GPIO_INTR_NEGEDGE;
-        //         break;
-        //     case GPIO_INTR_NEGEDGE:
-        //         int_type = GPIO_INTR_POSEDGE;
-        //         break;
-        //     case GPIO_INTR_LOW_LEVEL:
-        //         int_type = GPIO_INTR_HIGH_LEVEL;
-        //         break;
-        //     case GPIO_INTR_HIGH_LEVEL:
-        //         int_type = GPIO_INTR_LOW_LEVEL;
-        //         break;
-        //     default:
-        //         break;
-        //     }
-        // }
+        switch(_gpio)
+        {
+            case GPIO_Pin_0:
+                pin_source = exti_source = EXTI_PinSource0;
+                exti_irqn = EXTI0_IRQn;
+                break;
+            case GPIO_Pin_1:
+                pin_source = exti_source = EXTI_PinSource1;
+                exti_irqn = EXTI1_IRQn;
+                break;
+            case GPIO_Pin_2:
+                pin_source = exti_source = EXTI_PinSource2;
+                exti_irqn = EXTI2_IRQn;
+                break;
+            case GPIO_Pin_3:
+                pin_source = exti_source = EXTI_PinSource3;
+                exti_irqn = EXTI3_IRQn;
+                break;
+            case GPIO_Pin_4:
+                pin_source = exti_source = EXTI_PinSource4;
+                exti_irqn = EXTI4_IRQn;
+                break;
+            case GPIO_Pin_5:
+                pin_source = exti_source = EXTI_PinSource5;
+                exti_irqn = EXTI9_5_IRQn;
+                break;
+            case GPIO_Pin_6:
+                pin_source = exti_source = EXTI_PinSource6;
+                exti_irqn = EXTI9_5_IRQn;
+                break;
+            case GPIO_Pin_7:
+                pin_source = exti_source = EXTI_PinSource7;
+                exti_irqn = EXTI9_5_IRQn;
+                break;
+            case GPIO_Pin_8:
+                pin_source = exti_source = EXTI_PinSource8;
+                exti_irqn = EXTI9_5_IRQn;
+                break;
+            case GPIO_Pin_9:
+                pin_source = exti_source = EXTI_PinSource9;
+                exti_irqn = EXTI9_5_IRQn;
+                break;
+            case GPIO_Pin_10:
+                pin_source = exti_source = EXTI_PinSource10;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            case GPIO_Pin_11:
+                pin_source = exti_source = EXTI_PinSource11;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            case GPIO_Pin_12:
+                pin_source = exti_source = EXTI_PinSource12;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            case GPIO_Pin_13:
+                pin_source = exti_source = EXTI_PinSource13;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            case GPIO_Pin_14:
+                pin_source = exti_source = EXTI_PinSource14;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            case GPIO_Pin_15:
+                pin_source = exti_source = EXTI_PinSource15;
+                exti_irqn = EXTI15_10_IRQn;
+                break;
+            default:                
+                break;
+        }
 
-        // if (!_interrupt_service_installed)
-        // {
-        //     status = gpio_install_isr_service(0);
-        //     if (ESP_OK == status)
-        //     {
-        //         _interrupt_service_installed = true;
-        //     }
-        // }
+        SYSCFG_EXTILineConfig(_port_source, exti_source);
+        EXTI_InitTypeDef EXTI_InitStructure;
+        EXTI_InitStructure.EXTI_Line = static_cast<uint32_t>(_gpio);
+        EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+        EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+        switch(int_type)
+        {
+            case gpio_int_type_t::no_int:
+                EXTI_InitStructure.EXTI_LineCmd = DISABLE;
+                break;
+            case gpio_int_type_t::fall:
+                EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+                break;
+            case gpio_int_type_t::rise:
+                EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+                break;
+            case gpio_int_type_t::rise_and_fall:
+                EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+                break;
+        }
+        EXTI_Init(&EXTI_InitStructure);
 
-        // if (ESP_OK == status)
-        // {
-        //     status = gpio_set_intr_type(_interrupt_args._pin, int_type);
-        // }
-
-        // if (ESP_OK == status)
-        // {
-        //     status = gpio_isr_handler_add(_interrupt_args._pin, gpio_isr_callback, (void*) &_interrupt_args);
-        // }
-        //return status;
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = exti_irqn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 15;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
     }
 
-    void GpioInput::setEventHandler(std::function<bool()> &&handler)
+    void GpioInput::setEventHandler(std::function<void()> &&handler)
     {
-        // esp_err_t status{ESP_OK};
-
-        // taskENTER_CRITICAL(&_eventChangeMutex);
-
-        // status = _clearEventHandlers();
-
-        // status = esp_event_handler_instance_register(INPUT_EVENTS, _interrupt_args._pin, Gpio_e_h, 0, nullptr);
-
-        // if (ESP_OK == status)
-        // {
-        //     _interrupt_args._event_handler_set = true;
-        // }
-
-        // taskEXIT_CRITICAL(&_eventChangeMutex);
-
-        //return status;
+        std::pair<uint16_t, std::function<void()>> pair;
+        pair = make_pair(_gpio, std::move(handler));
+        // mutex
+        forwardListOfPairs.push_front(pair);
+        // mutex
     }
 
-    void GpioInput::_clearEventHandlers()
+    void GpioInput::clearEventHandlers()
     {
-        // esp_err_t status {ESP_OK};
-
-        // if(_interrupt_args._custom_event_handler_set)
-        // {
-        //     esp_event_handler_unregister_with(_interrupt_args._custom_event_loop_handle, INPUT_EVENTS, _interrupt_args._pin, _event_handle);
-        //     _interrupt_args._custom_event_handler_set = false;
-        // }
-        // else if (_interrupt_args._event_handler_set)
-        // {
-        //     esp_event_handler_instance_unregister(INPUT_EVENTS, _interrupt_args._pin, nullptr);
-        //     _interrupt_args._event_handler_set = false;
-        // }
-
-        // _interrupt_args._queue_handle = nullptr;
-        // _interrupt_args._queue_enabled = false;
-
-        //return status;
+        // mutex
+        forwardListOfPairs.remove_if([&](const std::pair<uint16_t, std::function<void()>> &pair)
+        {
+            return (pair.first == _gpio) ? true : false ;
+        });
+        // mutex
     }
 }

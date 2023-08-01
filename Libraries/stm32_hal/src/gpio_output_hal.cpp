@@ -10,81 +10,76 @@
 
 namespace gpio_hal
 {
-    void GpioOutput::_init(const gpio_num_t pin, const bool activeLow)
+    void GpioOutput::_init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        uint16_t gpio = pin;
-        GPIO_TypeDef *port;
-
-        switch(pin >> 16)
+        if(port == GPIOA)
         {
-            case 0:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
-                port = GPIOA;
-                break;
-            case 1:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
-                port = GPIOB;
-                break;
-            case 2:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
-                port = GPIOC;
-                break;
-            case 3:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
-                port = GPIOD;
-                break;
-            case 4:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
-                port = GPIOE;
-                break;
-            case 5:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
-                port = GPIOF;
-                break;
-            case 6:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOG, ENABLE);
-                port = GPIOG;
-                break;
-            case 7:
-                RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOH, ENABLE);
-                port = GPIOH;
-                break;
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+        }        
+        else if(port == GPIOB)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
         }
+        else if(port == GPIOC)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
+        }
+        else if(port == GPIOD)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
+        }
+        else if(port == GPIOE)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOE, ENABLE);
+        }
+        else if(port == GPIOF)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
+        }
+        else if(port == GPIOG)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOG, ENABLE);
+        }
+        else if(port == GPIOH)
+        {
+            RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOH, ENABLE);
+        }
+
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = gpio;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
-        GPIO_Init(port, &GPIO_InitStructure);
+        GPIO_Init((GPIO_TypeDef*)port, &GPIO_InitStructure);
         _active_low = activeLow;
         _gpio = gpio;
         _port = port;
-        GPIO_WriteBit(_port, gpio, _active_low ? Bit_SET : Bit_RESET);
+        GPIO_WriteBit((GPIO_TypeDef*)port, gpio, _active_low ? Bit_SET : Bit_RESET);
     }
 
-    GpioOutput::GpioOutput(const gpio_num_t pin, const bool activeLow)
+    GpioOutput::GpioOutput( GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        _init(pin, activeLow);
+        _init(port, gpio, activeLow);
     }
 
-    GpioOutput::GpioOutput(const gpio_num_t pin)
+    GpioOutput::GpioOutput( GPIO_TypeDef *const port, const uint16_t gpio)
     {
-        _init(pin, false);
+        _init(port, gpio, false);
     }
 
     GpioOutput::GpioOutput(void)
     {
     }
 
-    void GpioOutput::init(const gpio_num_t pin, const bool activeLow)
+    void GpioOutput::init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
     {
-        _init(pin, activeLow);
+        _init(port, gpio, activeLow);
     }
 
-    void GpioOutput::init(const gpio_num_t pin)
+    void GpioOutput::init( GPIO_TypeDef *const port, const uint16_t gpio)
     {
-        _init(pin, false);
+        _init(port, gpio, false);
     }
 
     void GpioOutput::on(void)
@@ -109,38 +104,5 @@ namespace gpio_hal
     {
         _level = _active_low ? !level : level;
         GPIO_WriteBit(_port, _gpio, _level ? Bit_SET : Bit_RESET);
-    }
-
-    GpioOutput::gpio_num_t GpioOutput::make_pin(GPIO_TypeDef *port, uint16_t gpio)
-    {
-        if(port == GPIOB)
-        {
-            return (gpio) | 0x10000;
-        }
-        else if(port == GPIOC)
-        {
-            return (gpio) | 0x20000;
-        }
-        else if(port == GPIOD)
-        {
-            return (gpio) | 0x30000;
-        }
-        else if(port == GPIOE)
-        {
-            return (gpio) | 0x40000;
-        }
-        else if(port == GPIOF)
-        {
-            return (gpio) | 0x50000;
-        }
-        else if(port == GPIOG)
-        {
-            return (gpio) | 0x60000;
-        }
-        else if(port == GPIOH)
-        {
-            return (gpio) | 0x70000;
-        }
-        return (gpio);
     }
 }
