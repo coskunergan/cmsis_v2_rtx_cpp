@@ -12,19 +12,19 @@
 #include <forward_list>
 
 namespace gpio_hal
-{
+{    
     class GpioBase
     {
     public:
         typedef uint32_t gpio_num_t;
     protected:
-        bool _active_low = false;
+        bool _active_low = false;        
     };
 
     class GpioInput : public GpioBase
     {
     private:
-        static std::forward_list<std::pair<uint16_t, std::function<void()>>>  forwardListOfPairs;
+        static std::forward_list<std::pair<uint16_t, std::function<void()>>>  forwardListOfPairs;        
         GPIO_TypeDef * _port;
         uint16_t _gpio;
         uint8_t _port_source;
@@ -47,8 +47,8 @@ namespace gpio_hal
         void disablePullupPulldown(void);
 
         void enableInterrupt(gpio_int_type_t int_type);
-        void setEventHandler(std::function<void()> &&handler);
-        void clearEventHandlers();
+        void setISRHandler(std::function<void()> &&handler);
+        void clearISRHandlers();
         static void gpio_isr_callback(const uint16_t gpio);
     };
 
@@ -72,4 +72,6 @@ namespace gpio_hal
         void setLevel(int level);
 
     };
+
+ 
 }

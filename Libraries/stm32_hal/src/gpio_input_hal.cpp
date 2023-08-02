@@ -12,30 +12,15 @@ namespace gpio_hal
 {
     std::forward_list<std::pair<uint16_t, std::function<void()>>> GpioInput::forwardListOfPairs;
 
-    // void GpioInput::EXTI0_IRQHandler(void)
-    // {
-    //     struct interrupt_args
-    //     {
-    //         bool _event_handler_set = false;
-    //         bool _custom_event_handler_set = false;
-    //         uint16_t _gpio;
-    //     } _interrupt_args;
-    //      _interrupt_args._gpio=GPIO_Pin_0;
-    //     gpio_isr_callback(&_interrupt_args);
-    //     EXTI_ClearITPendingBit(EXTI_Line0);
-    // }
-
     void GpioInput::gpio_isr_callback(const uint16_t gpio)
     {
-        // mutex
-        for(auto currentPair : forwardListOfPairs)
+        for(auto const &currentPair : forwardListOfPairs)
         {
             if(currentPair.first == gpio)
             {
                 currentPair.second();
             }
         }
-        // mutex
     }
 
     void GpioInput::_init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
@@ -246,7 +231,7 @@ namespace gpio_hal
                 pin_source = exti_source = EXTI_PinSource15;
                 exti_irqn = EXTI15_10_IRQn;
                 break;
-            default:                
+            default:
                 break;
         }
 
@@ -280,22 +265,105 @@ namespace gpio_hal
         NVIC_Init(&NVIC_InitStructure);
     }
 
-    void GpioInput::setEventHandler(std::function<void()> &&handler)
+    void GpioInput::setISRHandler(std::function<void()> &&handler)
     {
-        std::pair<uint16_t, std::function<void()>> pair;
-        pair = make_pair(_gpio, std::move(handler));
-        // mutex
+        clearISRHandlers();
+        std::pair<uint16_t, std::function<void()>> pair = make_pair(_gpio, std::move(handler));
         forwardListOfPairs.push_front(pair);
-        // mutex
     }
 
-    void GpioInput::clearEventHandlers()
+    void GpioInput::clearISRHandlers()
     {
-        // mutex
         forwardListOfPairs.remove_if([&](const std::pair<uint16_t, std::function<void()>> &pair)
         {
             return (pair.first == _gpio) ? true : false ;
         });
-        // mutex
+    }
+
+    extern "C" void EXTI0_IRQHandler(void)
+    {
+        GpioInput::gpio_isr_callback(GPIO_Pin_0);
+        EXTI_ClearITPendingBit(EXTI_Line0);
+    }
+    extern "C" void EXTI1_IRQHandler(void)
+    {
+        GpioInput::gpio_isr_callback(GPIO_Pin_1);
+        EXTI_ClearITPendingBit(EXTI_Line1);
+    }
+    extern "C" void EXTI2_IRQHandler(void)
+    {
+        GpioInput::gpio_isr_callback(GPIO_Pin_2);
+        EXTI_ClearITPendingBit(EXTI_Line2);
+    }
+    extern "C" void EXTI3_IRQHandler(void)
+    {
+        GpioInput::gpio_isr_callback(GPIO_Pin_3);
+        EXTI_ClearITPendingBit(EXTI_Line3);
+    }
+    extern "C" void EXTI4_IRQHandler(void)
+    {
+        GpioInput::gpio_isr_callback(GPIO_Pin_4);
+        EXTI_ClearITPendingBit(EXTI_Line4);
+    }
+    extern "C" void EXTI9_5_IRQHandler(void)
+    {
+        if(EXTI_GetFlagStatus(EXTI_Line5))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_5);
+            EXTI_ClearITPendingBit(EXTI_Line5);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line6))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_6);
+            EXTI_ClearITPendingBit(EXTI_Line6);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line7))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_7);
+            EXTI_ClearITPendingBit(EXTI_Line7);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line8))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_8);
+            EXTI_ClearITPendingBit(EXTI_Line8);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line9))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_9);
+            EXTI_ClearITPendingBit(EXTI_Line9);
+        }
+    }
+    extern "C" void EXTI10_15_IRQHandler(void)
+    {
+        if(EXTI_GetFlagStatus(EXTI_Line10))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_10);
+            EXTI_ClearITPendingBit(EXTI_Line10);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line11))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_11);
+            EXTI_ClearITPendingBit(EXTI_Line11);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line12))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_12);
+            EXTI_ClearITPendingBit(EXTI_Line12);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line13))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_13);
+            EXTI_ClearITPendingBit(EXTI_Line13);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line14))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_14);
+            EXTI_ClearITPendingBit(EXTI_Line14);
+        }
+        if(EXTI_GetFlagStatus(EXTI_Line15))
+        {
+            GpioInput::gpio_isr_callback(GPIO_Pin_15);
+            EXTI_ClearITPendingBit(EXTI_Line15);
+        }
     }
 }

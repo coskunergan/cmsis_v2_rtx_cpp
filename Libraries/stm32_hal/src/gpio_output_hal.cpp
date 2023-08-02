@@ -52,10 +52,10 @@ namespace gpio_hal
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_40MHz;
         GPIO_Init((GPIO_TypeDef*)port, &GPIO_InitStructure);
+        GPIO_WriteBit((GPIO_TypeDef*)port, gpio, _active_low ? Bit_SET : Bit_RESET);
         _active_low = activeLow;
         _gpio = gpio;
         _port = port;
-        GPIO_WriteBit((GPIO_TypeDef*)port, gpio, _active_low ? Bit_SET : Bit_RESET);
     }
 
     GpioOutput::GpioOutput( GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow)
