@@ -8,8 +8,10 @@
 #pragma once
 #include "RTE_Components.h"
 #include  CMSIS_device_header
+#include "mutex.h"
 #include <functional>
 #include <forward_list>
+#include <memory>
 
 namespace gpio_hal
 {    
@@ -24,7 +26,8 @@ namespace gpio_hal
     class GpioInput : public GpioBase
     {
     private:
-        static std::forward_list<std::pair<uint16_t, std::function<void()>>>  forwardListOfPairs;        
+        static std::forward_list<std::pair<uint16_t, std::function<void()>>>  forwardListOfPairs;                
+        static std::unique_ptr<std::mutex> m_mutex;
         GPIO_TypeDef * _port;
         uint16_t _gpio;
         uint8_t _port_source;
@@ -57,7 +60,7 @@ namespace gpio_hal
     private:
         uint16_t _gpio;
         GPIO_TypeDef *_port;
-        int _level = 0;
+        bool _level = false;
         void _init(GPIO_TypeDef *const port, const uint16_t gpio, const bool activeLow);
 
     public:

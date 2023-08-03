@@ -11,6 +11,7 @@
 namespace gpio_hal
 {
     std::forward_list<std::pair<uint16_t, std::function<void()>>> GpioInput::forwardListOfPairs;
+    std::unique_ptr<std::mutex> GpioInput::m_mutex;
 
     void GpioInput::gpio_isr_callback(const uint16_t gpio)
     {
@@ -267,17 +268,27 @@ namespace gpio_hal
 
     void GpioInput::setISRHandler(std::function<void()> &&handler)
     {
+        if(!GpioInput::m_mutex)
+        {
+            GpioInput::m_mutex = std::unique_ptr<std::mutex>(new std::mutex());
+        }
         clearISRHandlers();
+        std::lock_guard<std::mutex> lg(*GpioInput::m_mutex);
         std::pair<uint16_t, std::function<void()>> pair = make_pair(_gpio, std::move(handler));
-        forwardListOfPairs.push_front(pair);
+        forwardListOfPairs.push_front(pair);        
     }
 
     void GpioInput::clearISRHandlers()
-    {
+    {       
+        if(!GpioInput::m_mutex)
+        {
+            GpioInput::m_mutex = std::unique_ptr<std::mutex>(new std::mutex());
+        }         
+        std::lock_guard<std::mutex> lg(*GpioInput::m_mutex);
         forwardListOfPairs.remove_if([&](const std::pair<uint16_t, std::function<void()>> &pair)
         {
             return (pair.first == _gpio) ? true : false ;
-        });
+        });        
     }
 
     extern "C" void EXTI0_IRQHandler(void)
